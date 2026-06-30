@@ -15,9 +15,41 @@
 
 
 
-更有缠论有用的内容，请关注微信公众号【谢慕安】：
+更有缠论有用的内容，请关注原作者微信公众号【谢慕安】：
 
 - MACD面积公式
 - 防狼术公式
 - 等等
+
+---
+
+## 制作 EPUB 电子书
+
+本仓库提供脚本，可将全部课文（含课后回复、配图）合并并转为 EPUB 电子书。
+
+### 依赖
+
+- [Python 3](https://www.python.org/)（合并 Markdown）
+- [Pandoc](https://pandoc.org/install.html)（转 EPUB；macOS 可 `brew install pandoc`）
+
+### 一键生成
+
+```bash
+./build_epub.sh        # 生成 108-Ebook.md 并转为「缠中说禅教你炒股票108课.epub」
+./build_epub.sh -f     # 强制重新生成 Markdown 后再转
+```
+
+### 分步说明
+
+1. `python3 merge_markdown.py` 生成三种合并版本（默认输出到项目根目录）：
+   - `108-Article.md` —— 仅课文（忠实原文）
+   - `108-Full.md` —— 全文（忠实原文，评论保留为代码块）
+   - `108-Ebook.md` —— EPUB 优化版：评论转为引用块、标题去除博客ID、元信息改为题注、图片路径重写、多余空行规范化
+   - 可用 `--only article full ebook` 选择性生成
+
+2. EPUB 相关配置在 `epub/` 目录：
+   - `metadata.yaml` —— 书名、作者、语言等元数据
+   - `style.css` —— 排版样式（中文字体、段落首行缩进、评论引用块、图片居中、ASCII 走势图等宽显示）
+
+> Python 版 `merge_markdown.py` 相比旧版 `mergeMarkdownFiles.js` 修复了「重复运行导致内容翻倍」的陷阱：仅匹配源文件命名规则、产物写到项目根目录，物理隔离源文件与产物。
 

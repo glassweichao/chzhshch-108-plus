@@ -1,0 +1,16 @@
+# Pandoc EPUB 元数据
+# 用法: pandoc --metadata-file=epub/metadata.yaml ...
+# 参见 https://pandoc.org/MANUAL.html#epub-metadata
+
+title: "缠中说禅教你炒股票108课"
+subtitle: "加强版（原文 · 课后回复 · 配图）"
+author: "缠中说禅"
+date: "2006–2008"
+lang: zh-CN
+language: zh-CN
+subject: "股票投资 / 技术分析 / 缠论"
+description: >
+  缠中说禅《教你炒股票》108课全文（含新浪博客现已加密或删除的文章）、
+  课后回复（含 CCTV、罗锅等被点名者及疑似缠师小号的回复）及原文配图。
+rights: "本汇编仅供个人学习研究使用，版权归原作者所有。"
+# cover-image: cover.jpg   # 如需封面，取消注释并放入项目根目录

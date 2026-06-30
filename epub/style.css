@@ -1,0 +1,116 @@
+/* 缠中说禅教你炒股票108课 · EPUB 样式表 */
+/* 用法: pandoc --css=epub/style.css --epub-embed-fonts ... */
+
+body {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+               "Noto Sans CJK SC", "Source Han Sans SC", "Songti SC", serif;
+  line-height: 1.75;
+  margin: 0 0.4em;
+  text-align: justify;
+  text-justify: inter-ideograph;
+  color: #222;
+}
+
+/* ── 标题 ─────────────────────────────────────────
+   Pandoc 默认按一级标题切分 EPUB 章节；此处再强化每课新起一页。 */
+h1 {
+  font-size: 1.35em;
+  font-weight: bold;
+  text-align: center;
+  margin: 1.4em 0 0.8em;
+  page-break-before: always;
+  break-before: page;
+}
+/* 第一章（前言/书名）不强制另起 */
+h1:first-of-type {
+  page-break-before: avoid;
+  break-before: avoid;
+}
+
+/* 「课后回复」二级标题 */
+h2 {
+  font-size: 1.1em;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.25em;
+  margin: 2em 0 0.8em;
+}
+
+/* ── 段落：中文首行缩进 ─────────────────────────── */
+p {
+  margin: 0.55em 0;
+  text-indent: 2em;
+}
+/* 引用块、题注所在段落不缩进 */
+blockquote p {
+  text-indent: 0;
+}
+
+/* 元信息（日期斜体小字）*/
+em { color: #888; font-size: 0.9em; }
+
+/* ── 图片：限宽；pandoc 把独占段落图片包裹为 <figure>（居中）── */
+img {
+  max-width: 100%;
+  height: auto;
+}
+figure {
+  margin: 1em auto;
+  text-align: center;
+  break-inside: avoid;
+}
+figcaption {
+  font-size: 0.85em;
+  color: #888;
+  margin-top: 0.3em;
+}
+
+/* ── 课后回复：评论引用块 ───────────────────────── */
+blockquote {
+  margin: 0.8em 0;
+  padding: 0.4em 0.9em;
+  border-left: 3px solid #5b8def;
+  background: #f6f8fb;
+  font-size: 0.92em;
+  color: #333;
+  break-inside: avoid;
+}
+/* 嵌套引用：网友提问 */
+blockquote blockquote {
+  border-left-color: #f0a040;
+  background: #fbf6ef;
+  font-size: 0.95em;
+  margin: 0.5em 0;
+}
+blockquote small { color: #999; }
+
+/* ── ASCII 走势图 / 代码块：等宽、原样保留 ───────── */
+pre {
+  font-family: "Menlo", "Consolas", "Courier New", monospace;
+  font-size: 0.72em;
+  line-height: 1.25;
+  white-space: pre;
+  overflow-x: auto;
+  background: #f4f4f4;
+  padding: 0.5em;
+  border-radius: 3px;
+  break-inside: avoid;
+}
+/* 行内术语代码 */
+code {
+  font-family: "Menlo", "Consolas", monospace;
+  font-size: 0.9em;
+  background: #f0f0f0;
+  padding: 0 0.2em;
+  border-radius: 2px;
+}
+
+/* 分隔线（篇与篇、课文与评论之间）*/
+hr {
+  border: none;
+  border-top: 1px dashed #ccc;
+  margin: 1.5em 0;
+}
+
+/* 超链接 */
+a { color: #2a6db0; text-decoration: none; }
