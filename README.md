@@ -35,17 +35,19 @@
 ### 一键生成
 
 ```bash
-./build_epub.sh        # 生成 108-Ebook.md 并转为「缠中说禅教你炒股票108课.epub」
-./build_epub.sh -f     # 强制重新生成 Markdown 后再转
+./build_epub.sh            # 图文完整版 →「缠中说禅教你炒股票108课.epub」
+./build_epub.sh --audio    # 听书版（无图、仅禅师回复）→「缠中说禅教你炒股票108课（听书版）.epub」
+./build_epub.sh -f         # 强制重新生成 Markdown 后再转
 ```
 
 ### 分步说明
 
-1. `python3 merge_markdown.py` 生成三种合并版本（默认输出到项目根目录）：
+1. `python3 merge_markdown.py` 生成四种合并版本（默认输出到项目根目录）：
    - `108-Article.md` —— 仅课文（忠实原文）
    - `108-Full.md` —— 全文（忠实原文，评论保留为代码块）
    - `108-Ebook.md` —— EPUB 优化版：评论转为引用块、标题去除博客ID、元信息改为题注、图片路径重写、多余空行规范化
-   - 可用 `--only article full ebook` 选择性生成
+   - `108-Audio.md` —— **听书优化版**：不含图片、课后回复仅保留缠中说禅本人的答复、移除 ASCII 走势图与编者注，问答用「问：/答：」引导（TTS 友好）
+   - 可用 `--only article full ebook audio` 选择性生成
 
 2. EPUB 相关配置在 `epub/` 目录：
    - `metadata.yaml` —— 书名、作者、语言等元数据

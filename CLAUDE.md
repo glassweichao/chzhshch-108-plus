@@ -10,14 +10,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 合并 Markdown（二选一）：
 
-- `python3 merge_markdown.py` —— **推荐**，Python 版，生成三个版本到项目根目录：
+- `python3 merge_markdown.py` —— **推荐**，Python 版，生成四个版本到项目根目录：
   - `108-Article.md`（仅课文，忠实原文）
   - `108-Full.md`（全文，忠实原文）
   - `108-Ebook.md`（EPUB 优化版：评论→引用块、标题去博客ID、元信息题注化、图片路径重写）
-  - 支持 `--only article|full|ebook` 选择性生成、`--src` / `--out` 自定义目录
+  - `108-Audio.md`（听书优化版：无图、评论仅留缠中说禅回复、去 ASCII 图与编者注，TTS 友好）
+  - 支持 `--only article|full|ebook|audio` 选择性生成、`--src` / `--out` 自定义目录
 - `node mergeMarkdownFiles.js` —— 旧 JS 版，生成 `108/108-All.md`、`108/108-artileOnly.md`
 
-制作 EPUB：`./build_epub.sh` —— 生成 `108-Ebook.md` 并用 Pandoc 转为 `缠中说禅教你炒股票108课.epub`（依赖 `brew install pandoc`）。EPUB 配置在 `epub/metadata.yaml`（元数据）与 `epub/style.css`（样式）。
+制作 EPUB（依赖 `brew install pandoc`）：`./build_epub.sh` 出图文完整版，`./build_epub.sh --audio` 出听书版。EPUB 配置在 `epub/metadata.yaml`（元数据）与 `epub/style.css`（样式）。
 
 所有 `108-*.md` 与 `*.epub` 产物均被 `.gitignore` 忽略，不入库。
 

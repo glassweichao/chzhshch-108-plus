@@ -17,10 +17,10 @@
        · 规范化多余空行
 
 用法:
-  python3 merge_markdown.py                   # 生成 article / full / ebook 三个版本
-  python3 merge_markdown.py --only ebook      # 仅生成 EPUB 优化版
-  python3 merge_markdown.py --only article full
-  python3 merge_markdown.py --src 108 --out . # 指定源目录与输出目录
+  python3 merge_markdown.py                       # 生成 article / full / ebook / audio 四个版本
+  python3 merge_markdown.py --only ebook          # 仅生成 EPUB 优化版
+  python3 merge_markdown.py --only audio          # 仅生成听书优化版
+  python3 merge_markdown.py --src 108 --out .     # 指定源目录与输出目录
 """
 
 import argparse
@@ -190,6 +190,91 @@ def transform_for_ebook(raw: str, pic_prefix: str = "108/pic/"):
     return article_clean.strip() + "\n"
 
 
+# ── audio 模式：听书优化（TTS 友好）──────────────────────────────────────
+CHAN_NICK = "缠中说禅"
+AUDIO_HEADER = (
+    "# 缠中说禅教你炒股票108课\n\n"
+    "听书版：不含图片，课后回复仅保留缠中说禅本人的答复。\n\n---\n\n"
+)
+
+
+def transform_for_audio(raw: str):
+    """单篇课文 → 听书优化版 Markdown。
+
+    针对电子书 TTS 朗读优化：
+      · 移除图片、图注、ASCII 走势图（代码块）—— TTS 无法朗读图形
+      · 评论仅保留「缠中说禅」本人的回复（网友闲聊对学习无价值，徒增朗读时长）
+      · 评论不再逐条署名（全是同一人），问答用「问：/答：」引导，便于听辨
+      · 移除行内术语反引号
+    """
+    article, comment = split_article_comment(raw)
+
+    # ── 课文：去图 / 去编者注 / 去 ASCII 代码块 / 去博客ID / 元信息简化 ──
+    out, in_code = [], False
+    for ln in article.split("\n"):
+        ln = ln.replace("​", "").replace("﻿", "")   # 零宽空格 / BOM
+        ln = re.sub(r"【编者注[^】]*】", "", ln)                # 编者注（图注 & 文内注）
+        s = ln.strip()
+        if s.startswith("```"):               # 围栏（079 课 ASCII 走势图等），整块跳过
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        if s.startswith("!["):                # 图片行
+            continue
+        if not s:                             # 空行保留（维持段落）
+            out.append("")
+            continue
+        tm = re.match(r"^# \d{4}\s*-\s*(.+?)\s*$", ln)
+        if tm:                                # 标题去博客ID
+            out.append(f"# {tm.group(1).strip()}")
+            continue
+        if "分类：" in ln and "日期：" in ln:    # 元信息简化
+            out.append(clean_metadata_line(ln))
+            continue
+        out.append(ln.replace("`", ""))       # 移除行内术语反引号
+    article_clean = re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+
+    # ── 评论：仅禅师回复 ──
+    replies = extract_chan_replies(comment)
+    if replies:
+        article_clean += "\n\n---\n\n## 禅师课后回复\n\n" + replies
+    return article_clean + "\n"
+
+
+def extract_chan_replies(comment_text: str):
+    """从评论区提取「缠中说禅」的回复，返回拼好的引用块字符串。"""
+    text = comment_text.replace("`", "")
+    matches = list(HEAD_RE.finditer(text))
+    blocks = []
+    for i, m in enumerate(matches):
+        nick = re.sub(r"^\[匿名\]\s*", "", m.group(2).strip()).strip()
+        if nick != CHAN_NICK:
+            continue
+        body_end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        body = _dedent(text[m.end():body_end])
+        body = body.replace("​", "")
+        body = re.sub(r"【编者注[^】]*】", "", body).strip()
+        if body:
+            blocks.append(format_audio_reply(body))
+    return "\n\n".join(b for b in blocks if b)
+
+
+def format_audio_reply(body: str):
+    """单条禅师回复 → 引用块。有「==」分隔的网友提问转为「问：/答：」。"""
+    parts = re.split(r"\n[=]{2,}\s*\n", body, maxsplit=1)
+    segs = []
+    if len(parts) == 2:
+        q, a = parts[0].strip(), parts[1].strip()
+        if q:
+            segs.append("问：" + q)
+        if a:
+            segs.append("答：" + a)
+    elif parts[0].strip():
+        segs.append(parts[0].strip())
+    return _prefix("\n\n".join(segs), "> ").rstrip() if segs else ""
+
+
 # ── 合并写出 ──────────────────────────────────────────────────────────────
 def read_readme_header():
     if README.exists():
@@ -212,12 +297,19 @@ def build(targets, src_dir: Path, out_dir: Path):
         "article": ("108-Article.md", "仅课文（忠实原文）"),
         "full": ("108-Full.md", "全文（忠实原文，评论保留为代码块）"),
         "ebook": ("108-Ebook.md", "EPUB 优化版（评论→引用块 / 去博客ID / 元信息优化）"),
+        "audio": ("108-Audio.md", "听书优化版（无图 / 仅禅师回复 / 去 ASCII 图）"),
     }
 
     for t in targets:
-        # ebook 版不写 [toc] 占位（Pandoc 用 --toc 生成目录），其余版本保留以兼容旧工具
+        # ebook 用 README 前言；audio 用专属简短前言（README 的构建说明对听书无意义）；
+        # 其余版本保留 [toc] 占位以兼容旧工具（Pandoc 用 --toc 生成目录）
         readme = read_readme_header()
-        header = readme if t == "ebook" else "[toc]\n\n" + readme
+        if t == "audio":
+            header = AUDIO_HEADER
+        elif t == "ebook":
+            header = readme
+        else:
+            header = "[toc]\n\n" + readme
         fname, desc = jobs[t]
         out = [header]
         for no, raw in raw_texts:
@@ -225,6 +317,8 @@ def build(targets, src_dir: Path, out_dir: Path):
                 out.append(split_article_comment(raw)[0].strip())
             elif t == "full":
                 out.append(raw.strip())
+            elif t == "audio":
+                out.append(transform_for_audio(raw))
             else:  # ebook
                 out.append(transform_for_ebook(raw, pic_prefix))
             out.append("\n\n---\n\n")  # 篇与篇之间分隔
@@ -237,7 +331,7 @@ def build(targets, src_dir: Path, out_dir: Path):
 
 def main():
     ap = argparse.ArgumentParser(description="合并 108 课 Markdown（Python 版）")
-    ap.add_argument("--only", nargs="+", choices=["article", "full", "ebook"],
+    ap.add_argument("--only", nargs="+", choices=["article", "full", "ebook", "audio"],
                     help="只生成指定版本，默认全部生成")
     ap.add_argument("--src", default=str(DEFAULT_SRC), help="源目录（默认 ./108）")
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="输出目录（默认项目根）")
