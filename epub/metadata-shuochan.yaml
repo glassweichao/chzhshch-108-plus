@@ -1,0 +1,14 @@
+# 「说缠」版 Pandoc EPUB 元数据
+# 用法: pandoc --metadata-file=epub/metadata-shuochan.yaml ...
+
+title: "说缠"
+subtitle: "缠中说禅《教你炒股票》108 课精读版"
+author: "缠中说禅"
+date: "2006–2008"
+lang: zh-CN
+language: zh-CN
+subject: "股票投资 / 技术分析 / 缠论"
+description: >
+  标题以「缠N」编号（原章节题目作副标题），保留原文配图，
+  课后回复仅保留缠中说禅本人的答复。
+rights: "本汇编仅供个人学习研究使用，版权归原作者所有。"

@@ -27,6 +27,19 @@ h1:first-of-type {
   break-before: avoid;
 }
 
+/* 副标题（说缠版：「缠N」下的原章节题目）*/
+.subtitle {
+  text-align: center;
+  margin: 0 0 1em;
+}
+.subtitle p {
+  font-size: 1.05em;
+  font-weight: normal;
+  color: #666;
+  text-indent: 0;
+  margin: 0;
+}
+
 /* 「课后回复」二级标题 */
 h2 {
   font-size: 1.1em;

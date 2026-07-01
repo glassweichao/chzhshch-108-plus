@@ -92,13 +92,15 @@ def clean_metadata_line(line: str):
     return line
 
 
-def convert_comment_block(comment_text: str):
+def convert_comment_block(comment_text: str, nick_filter: str = None):
     """
     把整段评论区（含 ``` 围栏）转为 Markdown 引用块字符串。
 
     解析以「UID:」开头的评论头为边界，不依赖反引号配对，因此即使个别
     评论正文里含网友写的行内 ``` 也能正确切分。评论内所有反引号会被
     清除（评论是纯对话文本，反引号均为围栏噪音）。
+
+    nick_filter 指定时只保留该昵称的评论（用于「说缠」版仅保留禅师回复）。
     """
     text = comment_text.replace("`", "")  # 清除全部反引号
     matches = list(HEAD_RE.finditer(text))
@@ -110,6 +112,8 @@ def convert_comment_block(comment_text: str):
         nick_raw = m.group(2).strip()
         date = m.group(3).strip()
         nick = re.sub(r"^\[匿名\]\s*", "", nick_raw).strip() or "匿名"
+        if nick_filter and nick != nick_filter:
+            continue
         body_start = m.end()
         body_end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
         body = text[body_start:body_end].strip("\n").strip()
@@ -196,6 +200,7 @@ AUDIO_HEADER = (
     "# 缠中说禅教你炒股票108课\n\n"
     "听书版：不含图片，课后回复仅保留缠中说禅本人的答复。\n\n---\n\n"
 )
+SHUOCHAN_HEADER = "# 说缠\n\n缠中说禅《教你炒股票》108 课精读版。\n\n---\n\n"
 
 
 def transform_for_audio(raw: str):
@@ -275,6 +280,50 @@ def format_audio_reply(body: str):
     return _prefix("\n\n".join(segs), "> ").rstrip() if segs else ""
 
 
+# ── shuochan 模式：「说缠」精读版 ─────────────────────────────────────────
+def transform_for_shuochan(raw: str, pic_prefix: str = "108/pic/"):
+    """单篇课文 → 「说缠」版 Markdown。
+
+    标题改为「缠N」+ 副标题（原章节题目）；保留图片；课后回复仅保留缠中说禅本人。
+    非正式课文（W 补遗、括号补遗）标题不匹配「教你炒股票N」时，去博客ID后保留原标题。
+    """
+    article, comment = split_article_comment(raw)
+    out = []
+    for ln in article.split("\n"):
+        # 一级标题：教你炒股票N：题目  →  # 缠N + subtitle div；补遗 → 去博客ID 保留
+        hm = re.match(r"^# \d{4}\s*-\s*(.+?)\s*$", ln)
+        if hm:
+            rest = hm.group(1)
+            tm = re.match(r"教你炒股票(\d+)[：:]\s*(.+)$", rest)
+            if tm:
+                out.append(f"# 缠{tm.group(1)}")
+                out.append("")
+                out.append("::: subtitle")
+                out.append(tm.group(2).strip())
+                out.append(":::")
+            else:
+                out.append(f"# {rest.strip()}")
+            continue
+        if "分类：" in ln and "日期：" in ln:
+            out.append(clean_metadata_line(ln))
+            continue
+        ln = re.sub(r"!\[[^\]]*\]\(\./pic/", f"![图]({pic_prefix}", ln)
+        out.append(ln)
+    article_clean = "\n".join(out)
+
+    # 评论：仅禅师回复，ebook 式引用块（保留署名与网友提问嵌套）
+    if comment.strip():
+        sep_line = comment.split("\n", 1)[0]
+        comment_body = comment[len(sep_line):]
+        converted = convert_comment_block(comment_body, nick_filter=CHAN_NICK)
+        if converted.strip():
+            article_clean = (
+                article_clean.rstrip() + "\n\n---\n\n## 禅师课后回复\n\n" + converted
+            )
+    article_clean = re.sub(r"\n{3,}", "\n\n", article_clean)
+    return article_clean.strip() + "\n"
+
+
 # ── 合并写出 ──────────────────────────────────────────────────────────────
 def read_readme_header():
     if README.exists():
@@ -298,6 +347,7 @@ def build(targets, src_dir: Path, out_dir: Path):
         "full": ("108-Full.md", "全文（忠实原文，评论保留为代码块）"),
         "ebook": ("108-Ebook.md", "EPUB 优化版（评论→引用块 / 去博客ID / 元信息优化）"),
         "audio": ("108-Audio.md", "听书优化版（无图 / 仅禅师回复 / 去 ASCII 图）"),
+        "shuochan": ("108-Shuochan.md", "说缠版（标题 缠N+副标题 / 保留图片 / 仅禅师回复）"),
     }
 
     for t in targets:
@@ -306,6 +356,8 @@ def build(targets, src_dir: Path, out_dir: Path):
         readme = read_readme_header()
         if t == "audio":
             header = AUDIO_HEADER
+        elif t == "shuochan":
+            header = SHUOCHAN_HEADER
         elif t == "ebook":
             header = readme
         else:
@@ -319,6 +371,8 @@ def build(targets, src_dir: Path, out_dir: Path):
                 out.append(raw.strip())
             elif t == "audio":
                 out.append(transform_for_audio(raw))
+            elif t == "shuochan":
+                out.append(transform_for_shuochan(raw, pic_prefix))
             else:  # ebook
                 out.append(transform_for_ebook(raw, pic_prefix))
             out.append("\n\n---\n\n")  # 篇与篇之间分隔
@@ -331,7 +385,8 @@ def build(targets, src_dir: Path, out_dir: Path):
 
 def main():
     ap = argparse.ArgumentParser(description="合并 108 课 Markdown（Python 版）")
-    ap.add_argument("--only", nargs="+", choices=["article", "full", "ebook", "audio"],
+    ap.add_argument("--only", nargs="+",
+                    choices=["article", "full", "ebook", "audio", "shuochan"],
                     help="只生成指定版本，默认全部生成")
     ap.add_argument("--src", default=str(DEFAULT_SRC), help="源目录（默认 ./108）")
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="输出目录（默认项目根）")

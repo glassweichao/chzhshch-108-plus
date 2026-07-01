@@ -35,9 +35,10 @@
 ### 一键生成
 
 ```bash
-./build_epub.sh            # 图文完整版 →「缠中说禅教你炒股票108课.epub」
-./build_epub.sh --audio    # 听书版（无图、仅禅师回复）→「缠中说禅教你炒股票108课（听书版）.epub」
-./build_epub.sh -f         # 强制重新生成 Markdown 后再转
+./build_epub.sh             # 图文完整版 →「缠中说禅教你炒股票108课.epub」
+./build_epub.sh --audio     # 听书版（无图、仅禅师回复）→「缠中说禅教你炒股票108课（听书版）.epub」
+./build_epub.sh --shuochan  # 说缠版（标题 缠N+副标题、保留图片、仅禅师回复）→「说缠.epub」
+./build_epub.sh -f          # 强制重新生成 Markdown 后再转
 ```
 
 ### 分步说明
@@ -47,7 +48,8 @@
    - `108-Full.md` —— 全文（忠实原文，评论保留为代码块）
    - `108-Ebook.md` —— EPUB 优化版：评论转为引用块、标题去除博客ID、元信息改为题注、图片路径重写、多余空行规范化
    - `108-Audio.md` —— **听书优化版**：不含图片、课后回复仅保留缠中说禅本人的答复、移除 ASCII 走势图与编者注，问答用「问：/答：」引导（TTS 友好）
-   - 可用 `--only article full ebook audio` 选择性生成
+   - `108-Shuochan.md` —— **说缠版**：标题改为「缠N」+ 副标题（原章节题目）、保留图片、课后回复仅保留缠中说禅本人
+   - 可用 `--only article full ebook audio shuochan` 选择性生成
 
 2. EPUB 相关配置在 `epub/` 目录：
    - `metadata.yaml` —— 书名、作者、语言等元数据

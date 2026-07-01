@@ -2,10 +2,11 @@
 # 用 Pandoc 把合并后的 Markdown 转为 EPUB 电子书
 #
 # 用法：
-#   ./build_epub.sh            # 图文完整版（108-Ebook.md）
-#   ./build_epub.sh --audio    # 听书版（108-Audio.md：无图、仅禅师回复、去 ASCII 走势图）
-#   ./build_epub.sh -f         # 强制重新生成 Markdown 后再转
-#   ./build_epub.sh --audio -f
+#   ./build_epub.sh               # 图文完整版（108-Ebook.md）
+#   ./build_epub.sh --audio       # 听书版（无图、仅禅师回复）
+#   ./build_epub.sh --shuochan    # 说缠版（标题 缠N+副标题、保留图片、仅禅师回复）
+#   ./build_epub.sh -f            # 强制重新生成 Markdown 后再转
+#   ./build_epub.sh --shuochan -f
 #
 # 依赖：
 #   - python3   （生成 Markdown）
@@ -13,20 +14,22 @@
 set -e
 cd "$(dirname "$0")"
 
-AUDIO=0; FORCE=0
+MODE=ebook; FORCE=0
 for a in "$@"; do
     case "$a" in
-        --audio) AUDIO=1 ;;
-        -f)      FORCE=1 ;;
-        *)       echo "未知参数: $a"; exit 1 ;;
+        --ebook)    MODE=ebook ;;
+        --audio)    MODE=audio ;;
+        --shuochan) MODE=shuochan ;;
+        -f)         FORCE=1 ;;
+        *)          echo "未知参数: $a"; exit 1 ;;
     esac
 done
 
-if [ "$AUDIO" = "1" ]; then
-    MODE=audio; SRC=108-Audio.md; OUT="缠中说禅教你炒股票108课（听书版）.epub"
-else
-    MODE=ebook; SRC=108-Ebook.md; OUT="缠中说禅教你炒股票108课.epub"
-fi
+case "$MODE" in
+    ebook)    SRC=108-Ebook.md;    OUT="缠中说禅教你炒股票108课.epub";            META=epub/metadata.yaml ;;
+    audio)    SRC=108-Audio.md;    OUT="缠中说禅教你炒股票108课（听书版）.epub";   META=epub/metadata.yaml ;;
+    shuochan) SRC=108-Shuochan.md; OUT="说缠.epub";                              META=epub/metadata-shuochan.yaml ;;
+esac
 
 # 1) 生成 Markdown（已存在则跳过；-f 强制重新生成）
 if [ "$FORCE" = "1" ] || [ ! -f "$SRC" ]; then
@@ -38,7 +41,7 @@ fi
 echo "→ 转换为 EPUB …"
 pandoc "$SRC" \
     -o "$OUT" \
-    --metadata-file=epub/metadata.yaml \
+    --metadata-file="$META" \
     --css=epub/style.css \
     --toc \
     --toc-depth=1 \

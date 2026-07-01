@@ -15,10 +15,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `108-Full.md`（全文，忠实原文）
   - `108-Ebook.md`（EPUB 优化版：评论→引用块、标题去博客ID、元信息题注化、图片路径重写）
   - `108-Audio.md`（听书优化版：无图、评论仅留缠中说禅回复、去 ASCII 图与编者注，TTS 友好）
-  - 支持 `--only article|full|ebook|audio` 选择性生成、`--src` / `--out` 自定义目录
+  - `108-Shuochan.md`（说缠版：标题改「缠N」+副标题、保留图片、评论仅留禅师）
+  - 支持 `--only article|full|ebook|audio|shuochan` 选择性生成、`--src` / `--out` 自定义目录
 - `node mergeMarkdownFiles.js` —— 旧 JS 版，生成 `108/108-All.md`、`108/108-artileOnly.md`
 
-制作 EPUB（依赖 `brew install pandoc`）：`./build_epub.sh` 出图文完整版，`./build_epub.sh --audio` 出听书版。EPUB 配置在 `epub/metadata.yaml`（元数据）与 `epub/style.css`（样式）。
+制作 EPUB（依赖 `brew install pandoc`）：`./build_epub.sh`（完整版）/ `--audio`（听书版）/ `--shuochan`（说缠版，元数据 `epub/metadata-shuochan.yaml`）。EPUB 样式在 `epub/style.css`。
 
 所有 `108-*.md` 与 `*.epub` 产物均被 `.gitignore` 忽略，不入库。
 
